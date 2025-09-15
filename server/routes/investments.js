@@ -667,24 +667,49 @@ router.get('/portfolio/summary', authenticateToken, async (req, res) => {
                 totalInvested: 0,
                 totalGainLoss: 0,
                 investmentCount: 0,
-                investments: []
-            };
+                investments: [],
+                investmentWise: {
+                    totalValueIsa: 0,
+                    totalInvestedIsa: 0,
+                    currencyIsa: 'GBP',
+                    totalValueMutualFund: 0,
+                    totalInvestedMutualFund: 0,
+                    currencyMutualFund: 'INR',
+                    totalValueStock: 0,
+                    totalInvestedStock: 0,
+                    currencyStock: 'INR'
+                }
+        };
         });
 
         // Calculate member-specific totals
         for (const investment of investments) {
-            const currentValue = await currencyService.convertCurrency((investment.quantity * investment.currentPrice), investment.currency, 'GBP') || 0;
-            const investedValue = await currencyService.convertCurrency((investment.quantity * investment.averagePrice), investment.currency, 'GBP') || 0;
+            const currentValue = await currencyService.convertCurrency(investment.quantity * investment.currentPrice, investment.currency, 'GBP') || 0;
+            const investedValue = await currencyService.convertCurrency(investment.quantity * investment.averagePrice, investment.currency, 'GBP') || 0;
            
             const memberId = investment.memberId._id.toString();
             if (memberData[memberId]) {
+                // Convert to GBP for member totals
+                
                 memberData[memberId].totalValue += currentValue;
                 memberData[memberId].totalInvested += investedValue;
                 memberData[memberId].totalGainLoss += (currentValue - investedValue);
                 memberData[memberId].investmentCount += 1;
+
+                // Calculate investment-wise totals for each member (keep original currencies)
+                if (investment.investmentType === 'isa') {
+                    memberData[memberId].investmentWise.totalValueIsa += currentValue;
+                    memberData[memberId].investmentWise.totalInvestedIsa += investedValue;
+                } else if (investment.investmentType === 'mutual_fund') {
+                    memberData[memberId].investmentWise.totalValueMutualFund += await currencyService.convertCurrency(investment.quantity * investment.currentPrice, investment.currency, 'INR') || 0;;
+                    memberData[memberId].investmentWise.totalInvestedMutualFund += await currencyService.convertCurrency(investment.quantity * investment.averagePrice, investment.currency, 'INR') || 0;;
+                } else if (investment.investmentType === 'stock') {
+                    memberData[memberId].investmentWise.totalValueStock += await currencyService.convertCurrency(investment.quantity * investment.currentPrice, investment.currency, 'INR') || 0;;
+                    memberData[memberId].investmentWise.totalInvestedStock += await currencyService.convertCurrency(investment.quantity * investment.averagePrice, investment.currency, 'INR') || 0;;
+                }
             }
 
-            // Add to household totals
+            
             householdTotalValue += currentValue;
             householdTotalInvested += investedValue;
             householdTotalGainLoss += (currentValue - investedValue);
@@ -697,8 +722,25 @@ router.get('/portfolio/summary', authenticateToken, async (req, res) => {
 
         const householdGainLossPercentage = householdTotalInvested > 0 ? (householdTotalGainLoss / householdTotalInvested) * 100 : 0;
 
+        // Calculate household investmentWise totals
+        const householdInvestmentWise = {
+            totalValueIsa: 0,
+            totalInvestedIsa: 0,
+            currencyIsa: 'GBP',
+            totalValueMutualFund: 0,
+            totalInvestedMutualFund: 0,
+            currencyMutualFund: 'INR',
+            totalValueStock: 0,
+            totalInvestedStock: 0,
+            currencyStock: 'INR'
+        };
+
+
         console.log('Portfolio summary calculated successfully');
         console.log('Household totals - Value:', householdTotalValue, 'Invested:', householdTotalInvested, 'Gain/Loss:', householdTotalGainLoss);
+        console.log('Household investmentWise:', householdInvestmentWise);
+        console.log('Number of investments processed:', investments.length);
+        console.log('Investment types found:', [...new Set(investments.map(inv => inv.investmentType))]);
         
         res.json({
             // Household totals
@@ -707,10 +749,10 @@ router.get('/portfolio/summary', authenticateToken, async (req, res) => {
             totalGainLoss: householdTotalGainLoss,
             gainLossPercentage: householdGainLossPercentage,
             investmentCount: investments.length,
+          
             // Member-specific data
             members: Object.values(memberData),
             // All investments for client-side filtering
-            investments: investments,
             allInvestments: investments
         });
     } catch (error) {

@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-09-15T22:09:29.073Z",
+  "householdTotals": {
+    "totalValue": 39880.28731312048,
+    "totalInvested": 35473.70779985094,
+    "totalGainLoss": 4406.579513269553,
+    "gainLossPercentage": 12.422100159735965
+  },
+  "memberCount": 2,
+  "investmentCount": 69
+}

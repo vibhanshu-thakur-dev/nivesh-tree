@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
-  Search, 
-  Filter, 
   RefreshCw, 
   Edit, 
   Trash2,
@@ -18,17 +16,13 @@ import { useCurrency } from '../contexts/CurrencyContext';
 import { useCurrencyConversion } from '../hooks/useCurrencyConversion';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
-import AddInvestmentModal from '../components/AddInvestmentModal';
 import EditInvestmentModal from '../components/EditInvestmentModal';
-import InvestmentRow from '../components/InvestmentRow';
+import DataTable from '../components/DataTable';
 
 const Investments = () => {
   const [investments, setInvestments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [showAddModal, setShowAddModal] = useState(false);
   const [editingInvestment, setEditingInvestment] = useState(null);
   const [showClearModal, setShowClearModal] = useState(false);
   const [clearType, setClearType] = useState('trading212'); // 'trading212', 'tickertape', 'all'
@@ -168,17 +162,6 @@ const Investments = () => {
     }
   };
 
-  const handleAddInvestment = async (investmentData) => {
-    try {
-      await investmentsAPI.addInvestment(investmentData);
-      toast.success('Investment added successfully');
-      setShowAddModal(false);
-      fetchInvestments();
-    } catch (error) {
-      console.error('Add investment error:', error);
-      toast.error('Failed to add investment');
-    }
-  };
 
   const handleEditInvestment = async (id, investmentData) => {
     try {
@@ -236,13 +219,136 @@ const Investments = () => {
     return `${percentage >= 0 ? '+' : ''}${percentage.toFixed(2)}%`;
   };
 
-  const filteredInvestments = investments.filter(investment => {
-    const matchesSearch = investment.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterType === 'all' || investment.investmentType === filterType;
-    return matchesSearch && matchesFilter;
-  });
-
   const investmentTypes = ['all', 'stock', 'mutual_fund', 'isa', 'etf'];
+
+  // Define columns for DataTable
+  const columns = [
+    {
+      key: 'name',
+      header: 'Name',
+      accessor: 'name',
+      sortable: true,
+      searchable: true,
+      render: (investment) => (
+        <div className="flex items-center space-x-3">
+          <div className="flex-shrink-0">
+            <div className="w-10 h-10 bg-gradient-to-r from-primary-100 to-purple-100 rounded-lg flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-primary-600" />
+            </div>
+          </div>
+          <div>
+            <div className="font-semibold text-gray-900">{investment.name}</div>
+            <div className="text-sm text-gray-500">{investment.symbol}</div>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'investmentType',
+      header: 'Type',
+      accessor: 'investmentType',
+      sortable: true,
+      filterable: true,
+      render: (investment) => (
+        <span className="badge badge-primary">
+          {investment.investmentType?.charAt(0).toUpperCase() + investment.investmentType?.slice(1).replace('_', ' ')}
+        </span>
+      )
+    },
+    {
+      key: 'quantity',
+      header: 'Quantity',
+      accessor: 'quantity',
+      sortable: true,
+      sortType: 'number',
+      render: (investment) => (
+        <span className="font-medium">{investment.quantity?.toLocaleString()}</span>
+      )
+    },
+    {
+      key: 'averagePrice',
+      header: 'Avg Price',
+      accessor: 'averagePrice',
+      sortable: true,
+      sortType: 'number',
+      render: (investment) => (
+        <span className="font-medium">{formatCurrency(investment.averagePrice)}</span>
+      )
+    },
+    {
+      key: 'currentPrice',
+      header: 'Current Price',
+      accessor: 'currentPrice',
+      sortable: true,
+      sortType: 'number',
+      render: (investment) => (
+        <span className="font-medium">{formatCurrency(investment.currentPrice)}</span>
+      )
+    },
+    {
+      key: 'totalValue',
+      header: 'Total Value',
+      accessor: (investment) => investment.totalValue || (investment.quantity * investment.currentPrice),
+      sortable: true,
+      sortType: 'number',
+      render: (investment) => (
+        <span className="font-semibold text-gray-900">
+          {formatCurrency(investment.totalValue || (investment.quantity * investment.currentPrice))}
+        </span>
+      )
+    },
+    {
+      key: 'gainLoss',
+      header: 'Gain/Loss',
+      accessor: (investment) => {
+        const currentValue = investment.totalValue || (investment.quantity * investment.currentPrice);
+        const investedValue = investment.quantity * investment.averagePrice;
+        return currentValue - investedValue;
+      },
+      sortable: true,
+      sortType: 'number',
+      render: (investment) => {
+        const currentValue = investment.totalValue || (investment.quantity * investment.currentPrice);
+        const investedValue = investment.quantity * investment.averagePrice;
+        const gainLoss = currentValue - investedValue;
+        const percentage = investedValue > 0 ? (gainLoss / investedValue) * 100 : 0;
+        
+        return (
+          <div className="text-right">
+            <div className={`font-semibold ${gainLoss >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+              {formatCurrency(gainLoss)}
+            </div>
+            <div className={`text-sm ${gainLoss >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+              {formatPercentage(percentage)}
+            </div>
+          </div>
+        );
+      }
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      sortable: false,
+      render: (investment) => (
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setEditingInvestment(investment)}
+            className="btn btn-ghost btn-sm"
+            title="Edit investment"
+          >
+            <Edit className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => handleDeleteInvestment(investment._id)}
+            className="btn btn-ghost btn-sm text-danger-600 hover:text-danger-700"
+            title="Delete investment"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      )
+    }
+  ];
 
   if (loading) {
     return (
@@ -364,95 +470,22 @@ const Investments = () => {
               </div>
             </div>
           </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="btn btn-primary"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Investment
-          </button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="card">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search by name..."
-                className="input pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-gray-400" />
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="input"
-            >
-              {investmentTypes.map(type => (
-                <option key={type} value={type}>
-                  {type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
       </div>
 
       {/* Investments Table */}
-      <div className="card">
-        <div className="overflow-x-auto">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Quantity</th>
-                <th>Avg Price</th>
-                <th>Current Price</th>
-                <th>Total Value</th>
-                <th>Gain/Loss</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredInvestments.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="text-center py-8 text-gray-500">
-                    {investments.length === 0 ? 'No investments found. Add your first investment!' : 'No investments match your filters.'}
-                  </td>
-                </tr>
-              ) : (
-                filteredInvestments.map((investment) => (
-                  <InvestmentRow
-                    key={investment._id}
-                    investment={investment}
-                    onEdit={setEditingInvestment}
-                    onDelete={handleDeleteInvestment}
-                    formatPercentage={formatPercentage}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <DataTable
+        data={investments}
+        columns={columns}
+        searchable={true}
+        filterable={true}
+        sortable={true}
+        pagination={true}
+        pageSize={10}
+        emptyMessage={investments.length === 0 ? 'No investments found. Add your first investment!' : 'No investments match your filters.'}
+      />
 
       {/* Modals */}
-      {showAddModal && (
-        <AddInvestmentModal
-          onClose={() => setShowAddModal(false)}
-          onAdd={handleAddInvestment}
-          members={members}
-        />
-      )}
 
       {editingInvestment && (
         <EditInvestmentModal

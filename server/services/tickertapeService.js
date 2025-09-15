@@ -20,6 +20,7 @@ class TickertapeService {
             let isHeaderFound = false;
             let headerColumns = [];
             let rowCount = 0;
+            let fileType = null; // 'mutual_fund' or 'stock'
             
             // Read file line by line for better control
             const readline = require('readline');
@@ -36,17 +37,24 @@ class TickertapeService {
                 const columns = this.parseCSVLine(line);
                 
                 if (!isHeaderFound) {
-                    // Look for the header row (contains "Fund Name")
-                    if (columns.length > 10 && columns[0] === 'Fund Name') {
-                        isHeaderFound = true;
-                        headerColumns = columns;
-                        console.log('Found header row at line:', rowCount);
-                        console.log('Header columns:', headerColumns);
+                    // Detect file type based on header
+                    if (columns.length > 10) {
+                        if (columns[0] === 'Fund Name') {
+                            fileType = 'mutual_fund';
+                            isHeaderFound = true;
+                            headerColumns = columns;
+                            console.log('Detected Mutual Fund CSV format');
+                        } else if (columns[0] === 'Security' && columns.includes('Quantity')) {
+                            fileType = 'stock';
+                            isHeaderFound = true;
+                            headerColumns = columns;
+                            console.log('Detected Stock CSV format');
+                        }
                     }
                     return; // Skip this row
                 }
                 
-                // Skip the total row (contains "Total" in Fund Name)
+                // Skip the total row (contains "Total" in first column)
                 if (columns[0] && columns[0].toLowerCase().includes('total')) {
                     return;
                 }
@@ -56,57 +64,30 @@ class TickertapeService {
                     return;
                 }
                 
-                // Parse mutual fund data from the new CSV format
-                const fundName = columns[0]?.trim();
-                const amcName = columns[1]?.trim();
-                const category = columns[2]?.trim();
-                const subCategory = columns[3]?.trim();
-                const planType = columns[4]?.trim();
-                const optionType = columns[5]?.trim();
-                const nav = parseFloat(columns[6]?.replace(/,/g, '') || 0);
-                const units = parseFloat(columns[7]?.replace(/,/g, '') || 0);
-                const investedAmount = parseFloat(columns[8]?.replace(/,/g, '') || 0);
-                const currentValue = parseFloat(columns[9]?.replace(/,/g, '') || 0);
-                const weight = parseFloat(columns[10]?.replace(/,/g, '') || 0);
-                const pnl = parseFloat(columns[11]?.replace(/,/g, '') || 0);
-                const pnlPercent = parseFloat(columns[12]?.replace(/,/g, '') || 0);
-                const xirr = parseFloat(columns[13]?.replace(/,/g, '') || 0);
-                const investedSince = columns[14]?.trim();
+                // Skip section headers
+                if (columns[0] && (columns[0].includes('Stocks/ETFs') || columns[0].includes('Smallcases'))) {
+                    return;
+                }
                 
-                // Create investment object
-                const investment = {
-                    symbol: this.generateSymbolFromFundName(fundName),
-                    name: fundName,
-                    quantity: units,
-                    averagePrice: units > 0 ? investedAmount / units : 0,
-                    currentPrice: nav,
-                    currency: 'INR',
-                    investmentType: 'mutual_fund',
-                    totalValue: currentValue,
-                    totalValueGBP: currentValue * 0.01, // INR to GBP conversion (approximate)
-                    // Additional mutual fund specific data
-                    amcName: amcName,
-                    category: category,
-                    subCategory: subCategory,
-                    planType: planType,
-                    optionType: optionType,
-                    investedAmount: investedAmount,
-                    weight: weight,
-                    pnl: pnl,
-                    pnlPercent: pnlPercent,
-                    xirr: xirr,
-                    investedSince: investedSince
-                };
+                let investment;
+                
+                if (fileType === 'mutual_fund') {
+                    investment = this.parseMutualFundRow(columns);
+                } else if (fileType === 'stock') {
+                    investment = this.parseStockRow(columns);
+                } else {
+                    return; // Skip if file type not detected
+                }
 
                 // Only add if we have essential data
-                if (investment.symbol && investment.name && investment.quantity > 0) {
+                if (investment && investment.symbol && investment.name && investment.quantity > 0) {
                     results.push(investment);
-                    console.log(`Parsed mutual fund: ${fundName} - Units: ${units}, Current Value: ₹${currentValue}`);
+                    console.log(`Parsed ${fileType}: ${investment.name} - Quantity: ${investment.quantity}, Current Value: ${investment.currency}${investment.totalValue}`);
                 }
             });
             
             rl.on('close', () => {
-                console.log(`Parsed ${results.length} mutual fund investments from CSV`);
+                console.log(`Parsed ${results.length} ${fileType} investments from CSV`);
                 resolve(results);
             });
             
@@ -115,6 +96,83 @@ class TickertapeService {
                 reject(new Error('Failed to parse CSV file'));
             });
         });
+    }
+
+    parseMutualFundRow(columns) {
+        // Parse mutual fund data from the CSV format
+        const fundName = columns[0]?.trim();
+        const amcName = columns[1]?.trim();
+        const category = columns[2]?.trim();
+        const subCategory = columns[3]?.trim();
+        const planType = columns[4]?.trim();
+        const optionType = columns[5]?.trim();
+        const nav = parseFloat(columns[6]?.replace(/,/g, '') || 0);
+        const units = parseFloat(columns[7]?.replace(/,/g, '') || 0);
+        const investedAmount = parseFloat(columns[8]?.replace(/,/g, '') || 0);
+        const currentValue = parseFloat(columns[9]?.replace(/,/g, '') || 0);
+        const weight = parseFloat(columns[10]?.replace(/,/g, '') || 0);
+        const pnl = parseFloat(columns[11]?.replace(/,/g, '') || 0);
+        const pnlPercent = parseFloat(columns[12]?.replace(/,/g, '') || 0);
+        const xirr = parseFloat(columns[13]?.replace(/,/g, '') || 0);
+        const investedSince = columns[14]?.trim();
+        
+        return {
+            symbol: this.generateSymbolFromFundName(fundName),
+            name: fundName,
+            quantity: units,
+            averagePrice: units > 0 ? investedAmount / units : 0,
+            currentPrice: nav,
+            currency: 'INR',
+            investmentType: 'mutual_fund',
+            totalValue: currentValue,
+            // Additional mutual fund specific data
+            amcName: amcName,
+            category: category,
+            subCategory: subCategory,
+            planType: planType,
+            optionType: optionType,
+            investedAmount: investedAmount,
+            weight: weight,
+            pnl: pnl,
+            pnlPercent: pnlPercent,
+            xirr: xirr,
+            investedSince: investedSince
+        };
+    }
+
+    parseStockRow(columns) {
+        // Parse stock data from the CSV format
+        const security = columns[0]?.trim();
+        const noOfSmallcases = parseFloat(columns[1]?.replace(/,/g, '') || 0);
+        const quantity = parseFloat(columns[2]?.replace(/,/g, '') || 0);
+        const averageCost = parseFloat(columns[3]?.replace(/,/g, '') || 0);
+        const portfolioWeight = parseFloat(columns[4]?.replace(/,/g, '') || 0);
+        const ltp = parseFloat(columns[5]?.replace(/,/g, '') || 0);
+        const investedValue = parseFloat(columns[6]?.replace(/,/g, '') || 0);
+        const currentValue = parseFloat(columns[7]?.replace(/,/g, '') || 0);
+        const pnl = parseFloat(columns[8]?.replace(/,/g, '') || 0);
+        const netChangePercent = parseFloat(columns[9]?.replace(/,/g, '') || 0);
+        const dailyChange = parseFloat(columns[10]?.replace(/,/g, '') || 0);
+        const dailyChangePercent = parseFloat(columns[11]?.replace(/,/g, '') || 0);
+        
+        return {
+            symbol: security,
+            name: security,
+            quantity: quantity,
+            averagePrice: averageCost,
+            currentPrice: ltp,
+            currency: 'INR',
+            investmentType: 'stock',
+            totalValue: currentValue,
+            // Additional stock specific data
+            noOfSmallcases: noOfSmallcases,
+            portfolioWeight: portfolioWeight,
+            investedValue: investedValue,
+            pnl: pnl,
+            netChangePercent: netChangePercent,
+            dailyChange: dailyChange,
+            dailyChangePercent: dailyChangePercent
+        };
     }
     
     parseCSVLine(line) {

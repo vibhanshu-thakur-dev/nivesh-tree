@@ -20,12 +20,12 @@ const Layout = () => {
   const location = useLocation();
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Investments', href: '/investments', icon: TrendingUp },
-    { name: 'Goals', href: '/goals', icon: Target },
-    { name: 'Portfolio', href: '/portfolio', icon: BarChart3 },
-    { name: 'Profile', href: '/profile', icon: User },
-    { name: 'Settings', href: '/settings', icon: Settings },
+    { name: 'Dashboard', href: '/app/dashboard', icon: Home },
+    { name: 'Investments', href: '/app/investments', icon: TrendingUp },
+    { name: 'Goals', href: '/app/goals', icon: Target },
+    { name: 'Portfolio', href: '/app/portfolio', icon: BarChart3 },
+    { name: 'Profile', href: '/app/profile', icon: User },
+    { name: 'Settings', href: '/app/settings', icon: Settings },
   ];
 
   const isCurrentPath = (path) => {

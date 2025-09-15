@@ -47,7 +47,7 @@ const Register = () => {
       const result = await register(userData);
       if (result.success) {
         toast.success('Account created successfully!');
-        navigate('/dashboard');
+        navigate('/app/dashboard');
       } else {
         toast.error(result.error);
       }
