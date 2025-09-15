@@ -1,0 +1,22 @@
+{
+  "name": "nivesh-tree",
+  "version": "1.0.0",
+  "description": "Investment tracker website with Trading212 and tickertape.in integration",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "cd server && npm run dev",
+    "client:dev": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down"
+  },
+  "keywords": ["investment", "tracker", "portfolio", "trading212", "tickertape"],
+  "author": "Nivesh Tree",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

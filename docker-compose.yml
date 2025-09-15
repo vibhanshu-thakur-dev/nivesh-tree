@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  nivesh-tree:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - JWT_SECRET=your_jwt_secret_key_here_change_in_production
+      - TRADING212_API_KEY=your_trading212_api_key
+      - TICKERTAPE_API_KEY=your_tickertape_api_key
+    volumes:
+      - ./data:/app/server/database
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add a reverse proxy for production
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - nivesh-tree
+    restart: unless-stopped
+    profiles:
+      - production
+
+volumes:
+  data:
+    driver: local
