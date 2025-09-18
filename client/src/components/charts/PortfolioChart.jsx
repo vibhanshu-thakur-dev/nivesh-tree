@@ -228,3 +228,4 @@ const PortfolioChart = ({
 };
 
 export default PortfolioChart;
+

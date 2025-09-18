@@ -1,0 +1,62 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nivesh-tree-frontend-ingress
+  namespace: nivesh-tree
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+  # Frontend - invest-tree.home-network.sort-tree.com
+  - host: invest-tree.home-network.sort-tree.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nivesh-tree-service
+            port:
+              number: 5000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nivesh-tree-api-ingress
+  namespace: nivesh-tree
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: nivesh-tree-stripprefix@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+  # Backend API - api.home-network.sort-tree.com/invest-tree
+  - host: api.home-network.sort-tree.com
+    http:
+      paths:
+      - path: /invest-tree
+        pathType: Prefix
+        backend:
+          service:
+            name: nivesh-tree-service
+            port:
+              number: 5000
+  # Uncomment for HTTPS
+  # tls:
+  # - hosts:
+  #   - invest-tree.home-network.sort-tree.com
+  #   - api.home-network.sort-tree.com
+  #   secretName: nivesh-tree-tls
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: stripprefix
+  namespace: nivesh-tree
+spec:
+  stripPrefix:
+    prefixes:
+      - /invest-tree
