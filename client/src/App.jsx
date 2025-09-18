@@ -14,8 +14,19 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import LoadingSpinner from './components/LoadingSpinner';
 
-// Protected Route component
+// Protected Route component (with contexts)
 const ProtectedRoute = ({ children }) => {
+  return (
+    <AuthProvider>
+      <CurrencyProvider>
+        <ProtectedRouteInner>{children}</ProtectedRouteInner>
+      </CurrencyProvider>
+    </AuthProvider>
+  );
+};
+
+// Inner protected route component
+const ProtectedRouteInner = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
   if (loading) {
@@ -25,8 +36,17 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
-// Public Route component (redirect if authenticated)
+// Public Route component (with auth context only)
 const PublicRoute = ({ children }) => {
+  return (
+    <AuthProvider>
+      <PublicRouteInner>{children}</PublicRouteInner>
+    </AuthProvider>
+  );
+};
+
+// Inner public route component
+const PublicRouteInner = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
   if (loading) {
@@ -72,13 +92,9 @@ const AppRoutes = () => {
 // Main App Component
 const App = () => {
   return (
-    <AuthProvider>
-      <CurrencyProvider>
-        <div className="min-h-screen bg-gray-50">
-          <AppRoutes />
-        </div>
-      </CurrencyProvider>
-    </AuthProvider>
+    <div className="min-h-screen bg-gray-50">
+      <AppRoutes />
+    </div>
   );
 };
 

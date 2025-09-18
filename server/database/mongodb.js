@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 // MongoDB connection string
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://mongo:secret123@localhost:28017/nivesh_tree?authSource=admin&directConnection=true';
+const MONGODB_URI = process.env.MONGODB_URI ;
 
 // Connect to MongoDB
 const connectDB = async () => {

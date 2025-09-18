@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mongodb-init-job
+spec:
+  template:
+    metadata:
+      name: mongodb-init-pod
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: mongodb-init-container
+        image: mongo:4.4.6
+        command: [ "mongosh", "--host", "mongodb-0.mongodb-svc.nivesh-tree.svc.cluster.local", "--authenticationDatabase", "admin", "--username", "admin", "--password", "$(MONGO_INITDB_ROOT_PASSWORD)", "/mongo-init-script/init-script.js" ]
+        
+        env:
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: password
+        volumeMounts:
+        - name: mongo-init-script
+          mountPath: /mongo-init-script
+      volumes:
+      - name: mongo-init-script
+        configMap:
+          name: mongodb-init-script

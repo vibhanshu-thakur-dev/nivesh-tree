@@ -37,7 +37,7 @@ app.use(limiter);
 // CORS configuration
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-        ? ['https://yourdomain.com'] 
+        ? ['https://nivesh-tree.home-network.sort-tree.com','http://nivesh-tree.home-network.sort-tree.com'] 
         : ['http://localhost:3000', 'http://localhost:5173'],
     credentials: true
 }));
