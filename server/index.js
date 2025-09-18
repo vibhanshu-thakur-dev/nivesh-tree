@@ -8,6 +8,9 @@ const path = require('path');
 // Import database
 const database = require('./database/database');
 
+// Import data initialization service
+const dataInitializationService = require('./services/dataInitializationService');
+
 // Import routes
 const authRoutes = require('./routes/auth');
 const investmentRoutes = require('./routes/investments');
@@ -19,7 +22,7 @@ const memberApiKeyRoutes = require('./routes/memberApiKeys');
 const currencyRoutes = require('./routes/currency');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 // Security middleware
 app.use(helmet());
@@ -51,8 +54,23 @@ app.get('/health', (req, res) => {
     res.json({ 
         status: 'OK', 
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
+        dataInitialized: dataInitializationService.isDataInitialized()
     });
+});
+
+// Data initialization status endpoint
+app.get('/api/data/status', async (req, res) => {
+    try {
+        const stats = await dataInitializationService.getStockSymbolsStats();
+        res.json({
+            initialized: dataInitializationService.isDataInitialized(),
+            stockSymbols: stats
+        });
+    } catch (error) {
+        console.error('Error getting data status:', error);
+        res.status(500).json({ error: 'Failed to get data status' });
+    }
 });
 
 // API routes
@@ -100,11 +118,15 @@ const startServer = async () => {
         // Initialize database connection
         await database.init();
         
+        // Initialize data (stock symbols, etc.)
+        await dataInitializationService.initializeAllData();
+        
         app.listen(PORT, () => {
             console.log(`🚀 Nivesh Tree server running on port ${PORT}`);
             console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
             console.log(`🔗 Health check: http://localhost:${PORT}/health`);
             console.log(`🗄️  Database: MongoDB`);
+            console.log(`📈 Stock symbols: Initialized`);
         });
     } catch (error) {
         console.error('Failed to start server:', error);
