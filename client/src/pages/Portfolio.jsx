@@ -764,8 +764,8 @@ const Portfolio = () => {
                       {(member.investmentWise.totalFDINR > 0 || member.investmentWise.totalFDINR > 0) && (
                       <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-purple-800">GBP Cash</span>
-                          <span className="text-xs text-purple-600">GBP</span>
+                          <span className="text-sm font-medium text-purple-800">Fixex Deposits</span>
+                          <span className="text-xs text-purple-600">INR</span>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div>
