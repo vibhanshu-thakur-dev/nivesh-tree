@@ -29,7 +29,7 @@ const investmentSchema = new mongoose.Schema({
     investmentType: {
         type: String,
         required: true,
-        enum: ['stock', 'mutual_fund', 'isa', 'etf', 'bond', 'crypto', 'other']
+        enum: ['stock', 'mutual_fund', 'isa', 'etf', 'bond', 'crypto', 'cash', 'fixed_deposits', 'other']
     },
     quantity: {
         type: Number,
@@ -64,6 +64,14 @@ const investmentSchema = new mongoose.Schema({
         type: String,
         default: 'US',
         uppercase: true
+    },
+    bankName: {
+        type: String,
+        trim: true
+    },
+    accountType: {
+        type: String,
+        enum: ['savings', 'current']
     },
     metadata: {
         type: mongoose.Schema.Types.Mixed,

@@ -185,6 +185,7 @@ class Database {
 
     // Investment operations
     async createInvestment(investmentData) {
+        console.log(investmentData);
         await this.ensureConnected();
         const investment = new this.models.Investment(investmentData);
         return await investment.save();

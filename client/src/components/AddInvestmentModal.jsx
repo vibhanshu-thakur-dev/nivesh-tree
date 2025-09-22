@@ -9,7 +9,10 @@ const AddInvestmentModal = ({ onClose, onAdd, members = [] }) => {
     quantity: '',
     averagePrice: '',
     currency: 'USD',
-    memberId: ''
+    memberId: '',
+    amount: '',
+    bankName: '',
+    accountType: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -25,11 +28,35 @@ const AddInvestmentModal = ({ onClose, onAdd, members = [] }) => {
     setLoading(true);
 
     try {
-      const investmentData = {
-        ...formData,
-        quantity: parseFloat(formData.quantity),
-        averagePrice: parseFloat(formData.averagePrice)
-      };
+      let investmentData;
+      
+      if (formData.investmentType === 'cash' || formData.investmentType === 'fixed_deposits') {
+        // For cash and fixed deposits, use amount instead of quantity * averagePrice
+        const amount = parseFloat(formData.amount);
+        //add randon 4 digits to the end of the symbol
+        const randomDigits = Math.floor(1000 + Math.random() * 9000);
+        investmentData = {
+          symbol: formData.investmentType === 'fixed_deposits' ? (formData.bankName.toUpperCase() + ' FD' + randomDigits) :formData.bankName.toUpperCase(),
+          name: formData.investmentType === 'cash' ? 'Cash' : 'Fixed Deposits',
+          investmentType: formData.investmentType,
+          quantity: 1,
+          averagePrice: amount,
+          currentPrice: amount,
+          totalValue: amount,
+          currency: formData.currency,
+          memberId: formData.memberId,
+          bankName: formData.bankName,
+          accountType: formData.accountType
+        };
+      } else {
+        // For other investment types, use the existing logic
+        investmentData = {
+          ...formData,
+          quantity: parseFloat(formData.quantity),
+          averagePrice: parseFloat(formData.averagePrice)
+        };
+      }
+      
       await onAdd(investmentData);
     } catch (error) {
       console.error('Add investment error:', error);
@@ -55,38 +82,6 @@ const AddInvestmentModal = ({ onClose, onAdd, members = [] }) => {
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div>
-              <label htmlFor="symbol" className="label">
-                Symbol *
-              </label>
-              <input
-                id="symbol"
-                name="symbol"
-                type="text"
-                required
-                className="input"
-                placeholder="AAPL"
-                value={formData.symbol}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="name" className="label">
-                Name *
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                className="input"
-                placeholder="Apple Inc."
-                value={formData.name}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div>
               <label htmlFor="investmentType" className="label">
                 Investment Type *
               </label>
@@ -102,26 +97,48 @@ const AddInvestmentModal = ({ onClose, onAdd, members = [] }) => {
                 <option value="mutual_fund">Mutual Fund</option>
                 <option value="isa">ISA</option>
                 <option value="etf">ETF</option>
+                <option value="cash">Cash</option>
+                <option value="fixed_deposits">Fixed Deposits</option>
               </select>
             </div>
 
+            {formData.investmentType !== 'cash' && formData.investmentType !== 'fixed_deposits' && (
+              <>
+                <div>
+                  <label htmlFor="symbol" className="label">
+                    Symbol *
+                  </label>
+                  <input
+                    id="symbol"
+                    name="symbol"
+                    type="text"
+                    required
+                    className="input"
+                    placeholder="AAPL"
+                    value={formData.symbol}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="name" className="label">
+                    Name *
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    required
+                    className="input"
+                    placeholder="Apple Inc."
+                    value={formData.name}
+                    onChange={handleChange}
+                  />
+                </div>
+              </>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="quantity" className="label">
-                  Quantity *
-                </label>
-                <input
-                  id="quantity"
-                  name="quantity"
-                  type="number"
-                  step="0.000001"
-                  required
-                  className="input"
-                  placeholder="10"
-                  value={formData.quantity}
-                  onChange={handleChange}
-                />
-              </div>
               <div>
                 <label htmlFor="memberId" className="label">
                   Member *
@@ -162,22 +179,93 @@ const AddInvestmentModal = ({ onClose, onAdd, members = [] }) => {
               </div>
             </div>
 
-            <div>
-              <label htmlFor="averagePrice" className="label">
-                Average Price *
-              </label>
-              <input
-                id="averagePrice"
-                name="averagePrice"
-                type="number"
-                step="0.01"
-                required
-                className="input"
-                placeholder="150.00"
-                value={formData.averagePrice}
-                onChange={handleChange}
-              />
-            </div>
+            {formData.investmentType === 'cash' || formData.investmentType === 'fixed_deposits' ? (
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="amount" className="label">
+                    Amount *
+                  </label>
+                  <input
+                    id="amount"
+                    name="amount"
+                    type="number"
+                    step="0.01"
+                    required
+                    className="input"
+                    placeholder="1000.00"
+                    value={formData.amount}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="bankName" className="label">
+                      Bank Name
+                    </label>
+                    <input
+                      id="bankName"
+                      name="bankName"
+                      type="text"
+                      className="input"
+                      placeholder="e.g., Chase Bank"
+                      value={formData.bankName}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="accountType" className="label">
+                      Account Type
+                    </label>
+                    <select
+                      id="accountType"
+                      name="accountType"
+                      className="input"
+                      value={formData.accountType}
+                      onChange={handleChange}
+                    >
+                      <option value="">Select account type</option>
+                      <option value="savings">Savings</option>
+                      <option value="current">Current</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="quantity" className="label">
+                    Quantity *
+                  </label>
+                  <input
+                    id="quantity"
+                    name="quantity"
+                    type="number"
+                    step="0.000001"
+                    required
+                    className="input"
+                    placeholder="10"
+                    value={formData.quantity}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="averagePrice" className="label">
+                    Average Price *
+                  </label>
+                  <input
+                    id="averagePrice"
+                    name="averagePrice"
+                    type="number"
+                    step="0.01"
+                    required
+                    className="input"
+                    placeholder="150.00"
+                    value={formData.averagePrice}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="flex justify-end space-x-3 pt-4">
               <button

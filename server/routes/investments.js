@@ -69,11 +69,13 @@ router.get('/', authenticateToken, async (req, res) => {
 router.post('/', authenticateToken, [
     body('symbol').notEmpty().withMessage('Symbol is required'),
     body('name').notEmpty().withMessage('Name is required'),
-    body('investmentType').isIn(['stock', 'mutual_fund', 'isa', 'etf']).withMessage('Invalid investment type'),
+    body('investmentType').isIn(['stock', 'mutual_fund', 'isa', 'etf', 'cash', 'fixed_deposits']).withMessage('Invalid investment type'),
     body('quantity').isFloat({ min: 0 }).withMessage('Quantity must be a positive number'),
     body('averagePrice').isFloat({ min: 0 }).withMessage('Average price must be a positive number'),
     body('currency').optional().isLength({ min: 3, max: 3 }).withMessage('Currency must be 3 characters'),
-    body('memberId').notEmpty().withMessage('Member ID is required')
+    body('memberId').notEmpty().withMessage('Member ID is required'),
+    body('bankName').optional().isString().withMessage('Bank name must be a string'),
+    body('accountType').optional().isIn(['savings', 'current']).withMessage('Account type must be savings or current')
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
@@ -86,7 +88,7 @@ router.post('/', authenticateToken, [
             return res.status(404).json({ error: 'Household not found' });
         }
 
-        const { symbol, name, investmentType, quantity, averagePrice, currency = 'USD', memberId } = req.body;
+        const { symbol, name, investmentType, quantity, averagePrice, currency = 'USD', memberId, bankName, accountType } = req.body;
 
         // Verify member belongs to household
         const member = await database.findMemberById(memberId);
@@ -103,7 +105,7 @@ router.post('/', authenticateToken, [
 
         const totalValue = quantity * averagePrice;
 
-        const investment = await database.createInvestment({
+        const investmentData = {
             householdId: user.householdId,
             memberId: memberId,
             symbol: symbol.toUpperCase(),
@@ -116,7 +118,15 @@ router.post('/', authenticateToken, [
             currency: currency.toUpperCase(),
             sourceSystem: 'manual',
             sourceCountry: currency.toUpperCase() === 'GBP' ? 'GB' : 'US'
-        });
+        };
+
+        // Add bank-specific fields for cash and fixed deposits
+        if (investmentType === 'cash' || investmentType === 'fixed_deposits') {
+            if (bankName) investmentData.bankName = bankName;
+            if (accountType) investmentData.accountType = accountType;
+        }
+
+        const investment = await database.createInvestment(investmentData);
 
         res.status(201).json({
             message: 'Investment added successfully',
@@ -318,10 +328,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
 
-        const result = await database.run(
-            'DELETE FROM investments WHERE id = ? AND user_id = ?',
-            [id, req.user.id]
-        );
+        const result = await database.deleteInvestment(id);
 
         if (result.changes === 0) {
             return res.status(404).json({ error: 'Investment not found' });
@@ -672,12 +679,23 @@ router.get('/portfolio/summary', authenticateToken, async (req, res) => {
                     totalValueIsa: 0,
                     totalInvestedIsa: 0,
                     currencyIsa: 'GBP',
+
                     totalValueMutualFund: 0,
                     totalInvestedMutualFund: 0,
                     currencyMutualFund: 'INR',
+
                     totalValueStock: 0,
                     totalInvestedStock: 0,
-                    currencyStock: 'INR'
+                    currencyStock: 'INR',
+
+                    totalCashGBP: 0,
+                    currencyCashGBP: 'GBP',
+
+                    totalCashINR: 0,
+                    currencyCashINR: 'INR',
+
+                    totalFDINR: 0,
+                    currencyFDINR: 'INR'
                 }
         };
         });
@@ -706,6 +724,19 @@ router.get('/portfolio/summary', authenticateToken, async (req, res) => {
                 } else if (investment.investmentType === 'stock') {
                     memberData[memberId].investmentWise.totalValueStock += await currencyService.convertCurrency(investment.quantity * investment.currentPrice, investment.currency, 'INR') || 0;;
                     memberData[memberId].investmentWise.totalInvestedStock += await currencyService.convertCurrency(investment.quantity * investment.averagePrice, investment.currency, 'INR') || 0;;
+                } else if (investment.investmentType === 'cash' && investment.currency === 'GBP') {
+                    memberData[memberId].investmentWise.totalCashGBP += currentValue;
+                    
+                    // Cash investments are included in the main totals but can be tracked separately if needed
+                    // For now, they contribute to the overall portfolio value
+                } else if (investment.investmentType === 'cash' && investment.currency === 'INR') {
+                    memberData[memberId].investmentWise.totalCashINR += investment.totalValue;
+                    // Cash investments are included in the main totals but can be tracked separately if needed
+                    // For now, they contribute to the overall portfolio value
+                } else if (investment.investmentType === 'fixed_deposits') {
+                    memberData[memberId].investmentWise.totalFDINR += investment.totalValue;
+                    // Fixed deposits are included in the main totals but can be tracked separately if needed
+                    // For now, they contribute to the overall portfolio value
                 }
             }
 

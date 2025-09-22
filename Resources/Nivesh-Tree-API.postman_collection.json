@@ -1,0 +1,1060 @@
+{
+  "info": {
+    "name": "Nivesh Tree API",
+    "description": "Complete API collection for Nivesh Tree investment management application",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "{{baseUrl}}",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Data Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/data/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "data", "status"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.environment.set('authToken', responseJson.token);",
+                  "    pm.environment.set('userId', responseJson.user.id);",
+                  "    console.log('Auth token stored:', responseJson.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"firstName\": \"{{firstName}}\",\n  \"lastName\": \"{{lastName}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.environment.set('authToken', responseJson.token);",
+                  "    pm.environment.set('userId', responseJson.user.id);",
+                  "    console.log('Auth token stored:', responseJson.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"{{firstName}}\",\n  \"lastName\": \"{{lastName}}\",\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "profile"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Households",
+      "item": [
+        {
+          "name": "Get Household",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/households",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "households"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Household",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{householdName}}\",\n  \"description\": \"{{householdDescription}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/households",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "households"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/households/members",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "households", "members"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{memberName}}\",\n  \"email\": \"{{memberEmail}}\",\n  \"role\": \"member\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/households/members",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "households", "members"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Member",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{memberName}}\",\n  \"email\": \"{{memberEmail}}\",\n  \"role\": \"{{memberRole}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/households/members/{{memberId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "households", "members", "{{memberId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Member",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/households/members/{{memberId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "households", "members", "{{memberId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Investments",
+      "item": [
+        {
+          "name": "Get All Investments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/investments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Investment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symbol\": \"{{investmentSymbol}}\",\n  \"name\": \"{{investmentName}}\",\n  \"investmentType\": \"{{investmentType}}\",\n  \"quantity\": {{investmentQuantity}},\n  \"averagePrice\": {{investmentAveragePrice}},\n  \"currency\": \"{{investmentCurrency}}\",\n  \"memberId\": \"{{memberId}}\",\n  \"bankName\": \"{{bankName}}\",\n  \"accountType\": \"{{accountType}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/investments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Investment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": {{investmentQuantity}},\n  \"averagePrice\": {{investmentAveragePrice}},\n  \"currentPrice\": {{investmentCurrentPrice}},\n  \"bankName\": \"{{bankName}}\",\n  \"accountType\": \"{{accountType}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/investments/{{investmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments", "{{investmentId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Investment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/investments/{{investmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments", "{{investmentId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Portfolio Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/investments/portfolio/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments", "portfolio", "summary"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sync Trading212",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"memberId\": \"{{memberId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/investments/sync/trading212",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments", "sync", "trading212"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Import Tickertape CSV",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "csvFile",
+                  "type": "file",
+                  "src": "/path/to/csv/file.csv"
+                },
+                {
+                  "key": "memberId",
+                  "value": "{{memberId}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/investments/import/tickertape",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments", "import", "tickertape"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trading212 Account Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/investments/trading212/account",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments", "trading212", "account"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trading212 Instruments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/investments/trading212/instruments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments", "trading212", "instruments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trading212 Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/investments/trading212/orders?ticker={{ticker}}&limit={{limit}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments", "trading212", "orders"],
+              "query": [
+                {
+                  "key": "ticker",
+                  "value": "{{ticker}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trading212 Dividends",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/investments/trading212/dividends?ticker={{ticker}}&limit={{limit}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments", "trading212", "dividends"],
+              "query": [
+                {
+                  "key": "ticker",
+                  "value": "{{ticker}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Stored Trading212 Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/investments/trading212/orders/stored?ticker={{ticker}}&limit={{limit}}&offset={{offset}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments", "trading212", "orders", "stored"],
+              "query": [
+                {
+                  "key": "ticker",
+                  "value": "{{ticker}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}"
+                },
+                {
+                  "key": "offset",
+                  "value": "{{offset}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trading212 Order Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/investments/trading212/orders/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments", "trading212", "orders", "stats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trading212 Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/investments/trading212/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments", "trading212", "summary"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clear Trading212 Data",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/investments/trading212/clear",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments", "trading212", "clear"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clear Platform Data",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/investments/clear/{{platform}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments", "clear", "{{platform}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clear All Investment Data",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/investments/clear-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "investments", "clear-all"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Goals",
+      "item": [
+        {
+          "name": "Get All Goals",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/goals?memberId={{memberId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "goals"],
+              "query": [
+                {
+                  "key": "memberId",
+                  "value": "{{memberId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Goal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"{{goalTitle}}\",\n  \"targetAmount\": {{goalTargetAmount}},\n  \"targetDate\": \"{{goalTargetDate}}\",\n  \"category\": \"{{goalCategory}}\",\n  \"memberId\": \"{{memberId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/goals",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "goals"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Goal",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"{{goalTitle}}\",\n  \"targetAmount\": {{goalTargetAmount}},\n  \"targetDate\": \"{{goalTargetDate}}\",\n  \"currentAmount\": {{goalCurrentAmount}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/goals/{{goalId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "goals", "{{goalId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Goal",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/goals/{{goalId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "goals", "{{goalId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Goal Progress",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/goals/{{goalId}}/update-progress",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "goals", "{{goalId}}", "update-progress"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Goal Progress",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/goals/progress?memberId={{memberId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "goals", "progress"],
+              "query": [
+                {
+                  "key": "memberId",
+                  "value": "{{memberId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Stock Symbols",
+      "item": [
+        {
+          "name": "Get All Stock Symbols",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stock-symbols?type={{symbolType}}&currency={{currency}}&search={{search}}&limit={{limit}}&page={{page}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stock-symbols"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "{{symbolType}}"
+                },
+                {
+                  "key": "currency",
+                  "value": "{{currency}}"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}"
+                },
+                {
+                  "key": "page",
+                  "value": "{{page}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Stock Symbol by Ticker",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stock-symbols/ticker/{{ticker}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stock-symbols", "ticker", "{{ticker}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Stock Symbol by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stock-symbols/{{symbolId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stock-symbols", "{{symbolId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Stock Symbol",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticker\": \"{{ticker}}\",\n  \"type\": \"{{type}}\",\n  \"workingScheduleId\": {{workingScheduleId}},\n  \"isin\": \"{{isin}}\",\n  \"currencyCode\": \"{{currencyCode}}\",\n  \"name\": \"{{name}}\",\n  \"shortName\": \"{{shortName}}\",\n  \"maxOpenQuantity\": {{maxOpenQuantity}},\n  \"addedOn\": \"{{addedOn}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/stock-symbols",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stock-symbols"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Stock Symbol",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticker\": \"{{ticker}}\",\n  \"type\": \"{{type}}\",\n  \"workingScheduleId\": {{workingScheduleId}},\n  \"isin\": \"{{isin}}\",\n  \"currencyCode\": \"{{currencyCode}}\",\n  \"name\": \"{{name}}\",\n  \"shortName\": \"{{shortName}}\",\n  \"maxOpenQuantity\": {{maxOpenQuantity}},\n  \"addedOn\": \"{{addedOn}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/stock-symbols/{{symbolId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stock-symbols", "{{symbolId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Stock Symbol",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stock-symbols/{{symbolId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stock-symbols", "{{symbolId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Stock Symbol Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stock-symbols/stats/overview",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stock-symbols", "stats", "overview"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "API Keys",
+      "item": [
+        {
+          "name": "Get API Keys",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/api-keys",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "api-keys"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update API Keys",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trading212\": \"{{trading212ApiKey}}\",\n  \"tickertape\": \"{{tickertapeApiKey}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/api-keys",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "api-keys"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete API Key",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/api-keys/{{platform}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "api-keys", "{{platform}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test Trading212 API Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apiKey\": \"{{trading212ApiKey}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/api-keys/test/trading212",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "api-keys", "test", "trading212"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Member API Keys",
+      "item": [
+        {
+          "name": "Get Member API Keys",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/member-api-keys/{{memberId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "member-api-keys", "{{memberId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Member API Keys",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trading212\": \"{{trading212ApiKey}}\",\n  \"tickertape\": \"{{tickertapeApiKey}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/member-api-keys/{{memberId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "member-api-keys", "{{memberId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Member API Key",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/member-api-keys/{{memberId}}/{{platform}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "member-api-keys", "{{memberId}}", "{{platform}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test Member Trading212 API Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apiKey\": \"{{trading212ApiKey}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/member-api-keys/{{memberId}}/test/trading212",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "member-api-keys", "{{memberId}}", "test", "trading212"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Currency",
+      "item": [
+        {
+          "name": "Get Supported Currencies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/currency/currencies",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "currency", "currencies"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Exchange Rates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/currency/rates",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "currency", "rates"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Convert Currency",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": {{amount}},\n  \"fromCurrency\": \"{{fromCurrency}}\",\n  \"toCurrency\": \"{{toCurrency}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/currency/convert",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "currency", "convert"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Convert Portfolio Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"portfolioData\": {{portfolioData}},\n  \"targetCurrency\": \"{{targetCurrency}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/currency/convert-portfolio",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "currency", "convert-portfolio"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

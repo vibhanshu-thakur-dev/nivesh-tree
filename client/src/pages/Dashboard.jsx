@@ -638,7 +638,7 @@ const Dashboard = () => {
                       <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium text-purple-800">Stock</span>
-                          <span className="text-xs text-purple-600">GBP</span>
+                          <span className="text-xs text-purple-600">INR</span>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div>

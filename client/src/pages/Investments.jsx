@@ -17,6 +17,7 @@ import { useCurrencyConversion } from '../hooks/useCurrencyConversion';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EditInvestmentModal from '../components/EditInvestmentModal';
+import AddInvestmentModal from '../components/AddInvestmentModal';
 import DataTable from '../components/DataTable';
 
 const Investments = () => {
@@ -33,6 +34,7 @@ const Investments = () => {
   const [members, setMembers] = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState(null);
   const [allInvestments, setAllInvestments] = useState([]);
+  const [showAddModal, setShowAddModal] = useState(false);
   
   const { formatCurrency } = useCurrency();
   const { convertInvestments, calculateInvestmentMetrics } = useCurrencyConversion();
@@ -175,6 +177,18 @@ const Investments = () => {
     }
   };
 
+  const handleAddInvestment = async (investmentData) => {
+    try {
+      await investmentsAPI.addInvestment(investmentData);
+      toast.success('Investment added successfully');
+      setShowAddModal(false);
+      fetchInvestments();
+    } catch (error) {
+      console.error('Add investment error:', error);
+      toast.error('Failed to add investment');
+    }
+  };
+
   const handleShowClearModal = async (type = 'trading212') => {
     try {
       setClearType(type);
@@ -219,7 +233,7 @@ const Investments = () => {
     return `${percentage >= 0 ? '+' : ''}${percentage.toFixed(2)}%`;
   };
 
-  const investmentTypes = ['all', 'stock', 'mutual_fund', 'isa', 'etf'];
+  const investmentTypes = ['all', 'stock', 'mutual_fund', 'isa', 'etf', 'cash', 'fixed_deposits'];
 
   // Define columns for DataTable
   const columns = [
@@ -239,6 +253,13 @@ const Investments = () => {
           <div>
             <div className="font-semibold text-gray-900">{investment.name}</div>
             <div className="text-sm text-gray-500">{investment.symbol}</div>
+            {(investment.investmentType === 'cash' || investment.investmentType === 'fixed_deposits') && (
+              <div className="text-xs text-gray-400">
+                {investment.bankName && `${investment.bankName}`}
+                {investment.bankName && investment.accountType && ' • '}
+                {investment.accountType && `${investment.accountType.charAt(0).toUpperCase() + investment.accountType.slice(1)} Account`}
+              </div>
+            )}
           </div>
         </div>
       )
@@ -397,6 +418,13 @@ const Investments = () => {
         </div>
         <div className="flex space-x-3">
           <button
+            onClick={() => setShowAddModal(true)}
+            className="btn btn-primary"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Investment
+          </button>
+          <button
             onClick={() => handleSyncInvestments('trading212')}
             disabled={syncing}
             className="btn btn-outline"
@@ -486,6 +514,14 @@ const Investments = () => {
       />
 
       {/* Modals */}
+
+      {showAddModal && (
+        <AddInvestmentModal
+          onClose={() => setShowAddModal(false)}
+          onAdd={handleAddInvestment}
+          members={members}
+        />
+      )}
 
       {editingInvestment && (
         <EditInvestmentModal

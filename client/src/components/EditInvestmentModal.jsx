@@ -5,7 +5,9 @@ const EditInvestmentModal = ({ investment, onClose, onUpdate }) => {
   const [formData, setFormData] = useState({
     quantity: '',
     averagePrice: '',
-    currentPrice: ''
+    currentPrice: '',
+    bankName: '',
+    accountType: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -14,7 +16,9 @@ const EditInvestmentModal = ({ investment, onClose, onUpdate }) => {
       setFormData({
         quantity: investment.quantity.toString(),
         averagePrice: investment.average_price.toString(),
-        currentPrice: investment.current_price ? investment.current_price.toString() : ''
+        currentPrice: investment.current_price ? investment.current_price.toString() : '',
+        bankName: investment.bankName || '',
+        accountType: investment.accountType || ''
       });
     }
   }, [investment]);
@@ -35,6 +39,8 @@ const EditInvestmentModal = ({ investment, onClose, onUpdate }) => {
       if (formData.quantity) updateData.quantity = parseFloat(formData.quantity);
       if (formData.averagePrice) updateData.averagePrice = parseFloat(formData.averagePrice);
       if (formData.currentPrice) updateData.currentPrice = parseFloat(formData.currentPrice);
+      if (formData.bankName !== undefined) updateData.bankName = formData.bankName;
+      if (formData.accountType !== undefined) updateData.accountType = formData.accountType;
 
       await onUpdate(investment.id, updateData);
     } catch (error) {
@@ -111,6 +117,42 @@ const EditInvestmentModal = ({ investment, onClose, onUpdate }) => {
                 onChange={handleChange}
               />
             </div>
+
+            {(investment.investmentType === 'cash' || investment.investmentType === 'fixed_deposits') && (
+              <>
+                <div>
+                  <label htmlFor="bankName" className="label">
+                    Bank Name
+                  </label>
+                  <input
+                    id="bankName"
+                    name="bankName"
+                    type="text"
+                    className="input"
+                    placeholder="e.g., Chase Bank"
+                    value={formData.bankName}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="accountType" className="label">
+                    Account Type
+                  </label>
+                  <select
+                    id="accountType"
+                    name="accountType"
+                    className="input"
+                    value={formData.accountType}
+                    onChange={handleChange}
+                  >
+                    <option value="">Select account type</option>
+                    <option value="savings">Savings</option>
+                    <option value="current">Current</option>
+                  </select>
+                </div>
+              </>
+            )}
 
             <div className="flex justify-end space-x-3 pt-4">
               <button
