@@ -582,9 +582,34 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                {/* Member Investment-wise Breakdown */}
-                {member.investmentWise && (
+                  {/* Member Investment-wise Breakdown */}
+                  {member.investmentWise && (
                   <div className="space-y-3">
+
+                    {/* Cash UK */}
+                    {(member.investmentWise.totalCashGBP > 0 ) && (
+                        <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-green-800">GBP Cash</span>
+                          <span className="text-xs text-green-600">GBP</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="text-green-600">Value</span>
+                            <div className="font-semibold text-green-900">
+                              {formatCurrencyWithSymbol(member.investmentWise.totalCashGBP, member.investmentWise.currencyCashGBP)}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-green-600">Invested</span>
+                            <div className="font-semibold text-green-900">
+                              {formatCurrencyWithSymbol(member.investmentWise.totalCashGBP, member.investmentWise.currencyCashGBP)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* ISA Investments */}
                     {(member.investmentWise.totalValueIsa > 0 || member.investmentWise.totalInvestedIsa > 0) && (
                       <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
@@ -603,6 +628,30 @@ const Dashboard = () => {
                             <span className="text-blue-600">Invested</span>
                             <div className="font-semibold text-blue-900">
                               {formatCurrencyWithSymbol(member.investmentWise.totalInvestedIsa, member.investmentWise.currencyIsa)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                      {/* FD Investments */}
+                      {(member.investmentWise.totalFDINR > 0 || member.investmentWise.totalFDINR > 0) && (
+                      <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-purple-800">Fixed Deposits</span>
+                          <span className="text-xs text-purple-600">INR</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="text-purple-600">Value</span>
+                            <div className="font-semibold text-purple-900">
+                              {formatCurrencyWithSymbol(member.investmentWise.totalFDINR, member.investmentWise.currencyFDINR)}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-purple-600">Invested</span>
+                            <div className="font-semibold text-purple-900">
+                              {formatCurrencyWithSymbol(member.investmentWise.totalFDINR, member.investmentWise.currencyFDINR)}
                             </div>
                           </div>
                         </div>

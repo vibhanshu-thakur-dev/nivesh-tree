@@ -6,7 +6,7 @@ metadata:
   labels:
     app: nivesh-tree
 spec:
-  replicas: 2
+  replicas: 4
   selector:
     matchLabels:
       app: nivesh-tree
@@ -15,9 +15,19 @@ spec:
       labels:
         app: nivesh-tree
     spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: workernode
+                operator: In
+                values:
+                - true
       containers:
       - name: nivesh-tree
-        image: vibhanshuthakurdocker/nivesh-tree:latest  # Replace with your actual image name
+        image: vibhanshuthakurdocker/nivesh-tree:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000

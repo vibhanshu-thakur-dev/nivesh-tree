@@ -45,7 +45,7 @@ metadata:
     app: mongodb
 spec:
   serviceName: mongodb-svc
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: mongodb
@@ -54,6 +54,16 @@ spec:
       labels:
         app: mongodb
     spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: workernode
+                operator: In
+                values:
+                - true
       containers:
       - name: mongodb
         image: mongo:4.4.6
