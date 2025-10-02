@@ -63,7 +63,7 @@ spec:
               - key: workernode
                 operator: In
                 values:
-                - true
+                - "true"
       containers:
       - name: mongodb
         image: mongo:4.4.6
