@@ -24,7 +24,7 @@ spec:
               - key: workernode
                 operator: In
                 values:
-                - true
+                - "true"
       containers:
       - name: nivesh-tree
         image: vibhanshuthakurdocker/nivesh-tree:latest
