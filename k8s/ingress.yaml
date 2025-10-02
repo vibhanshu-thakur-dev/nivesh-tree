@@ -18,3 +18,7 @@ spec:
             name: nivesh-tree-service
             port:
               number: 5000
+  tls:
+    - hosts:
+        - nivesh-tree.home-network.sort-tree.com
+      secretName: nivesh-tree-tls
