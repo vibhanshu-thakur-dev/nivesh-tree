@@ -27,7 +27,7 @@ spec:
                 - "true"
       containers:
       - name: nivesh-tree
-        image: vibhanshuthakurdocker/nivesh-tree:latest
+        image: vibhanshuthakurdocker/nivesh-tree:1.0.9
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
