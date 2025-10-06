@@ -215,3 +215,9 @@ The Traefik middleware automatically strips the `/invest-tree` prefix from API r
 5. Implement backup strategies
 6. Use a proper CI/CD pipeline
 7. Consider using Helm for package management
+
+# Using existing cert + key files (full chain recommended)
+kubectl create secret tls my-site-tls \
+  --cert=fullchain.pem \
+  --key=privkey.pem \
+  -n my-namespace
