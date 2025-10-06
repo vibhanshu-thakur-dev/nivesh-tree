@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const database = require('../database/database');
+const currencyService = require('../services/currencyService');
 const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
@@ -13,10 +14,45 @@ router.get('/', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Household not found' });
         }
 
-        const { memberId } = req.query;
-        const goals = await database.findGoalsByHousehold(user.householdId, memberId);
+        const { memberId, status } = req.query;
+        const filters = {};
+        if (status) filters.status = status;
+        const goals = await database.findGoalsByHousehold(user.householdId, memberId, filters);
 
-        res.json({ goals });
+        // Automatically compute currentAmount for each goal based on investments
+        const computedGoals = [];
+        for (const goal of goals) {
+            let currentAmount = 0;
+            if (goal.memberId && goal.investmentType) {
+                const investments = await database.findInvestmentsByMember(goal.memberId, { investmentType: goal.investmentType });
+                for (const inv of investments) {
+                    if (inv.investmentType === goal.investmentType) {
+                        const rawValue = inv.totalValue ?? ((inv.quantity || 0) * (inv.currentPrice || 0));
+                        const numericValue = Number.isFinite(rawValue) ? rawValue : 0;
+                        const fromCurrency = inv.currency || 'GBP';
+                        const toCurrency = goal.currency || 'GBP';
+                        const converted = await currencyService.convertCurrency(numericValue, fromCurrency, toCurrency);
+                        currentAmount += converted;
+                    }
+                }
+            }
+
+            const isAchieved = currentAmount >= (goal.targetAmount || 0);
+
+            // Persist if values changed
+            const needsUpdate = (goal.currentAmount !== currentAmount) || ((goal.status === 'active' || goal.status === 'paused') && isAchieved);
+            let updated = goal;
+            if (needsUpdate) {
+                updated = await database.updateGoal(goal._id, {
+                    currentAmount,
+                    status: isAchieved ? 'completed' : (goal.status || 'active')
+                });
+            }
+
+            computedGoals.push(updated);
+        }
+
+        res.json({ goals: computedGoals });
     } catch (error) {
         console.error('Get goals error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -28,8 +64,9 @@ router.post('/', authenticateToken, [
     body('title').notEmpty().withMessage('Goal title is required'),
     body('targetAmount').isFloat({ min: 0 }).withMessage('Target amount must be a positive number'),
     body('targetDate').optional().isISO8601().withMessage('Target date must be a valid date'),
-    body('category').optional().isIn(['total_value', 'specific_investment']).withMessage('Invalid goal category'),
-    body('memberId').notEmpty().withMessage('Member ID is required')
+    body('memberId').notEmpty().withMessage('Member ID is required'),
+    body('currency').optional().isIn(['USD', 'EUR', 'GBP', 'INR', 'GBX']).withMessage('Invalid currency'),
+    body('investmentType').notEmpty().isIn(['stock', 'mutual_fund', 'isa', 'etf', 'bond', 'crypto', 'cash', 'fixed_deposits', 'other']).withMessage('Invalid investment type')
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
@@ -42,7 +79,7 @@ router.post('/', authenticateToken, [
             return res.status(404).json({ error: 'Household not found' });
         }
 
-        const { title, targetAmount, targetDate, category = 'total_value', memberId } = req.body;
+        const { title, targetAmount, targetDate, memberId, currency = 'GBP', investmentType = 'other' } = req.body;
 
         // Verify member belongs to household
         const member = await database.findMemberById(memberId);
@@ -56,9 +93,9 @@ router.post('/', authenticateToken, [
             title,
             targetAmount,
             targetDate: targetDate ? new Date(targetDate) : null,
-            category,
             status: 'active',
-            currency: 'GBP'
+            currency,
+            investmentType
         });
 
         res.status(201).json({
@@ -169,24 +206,23 @@ router.post('/:id/update-progress', authenticateToken, async (req, res) => {
         }
 
         let currentAmount = 0;
-
-        if (goal.category === 'total_value') {
-            // Get total portfolio value for the member or household
-            const investments = goal.memberId ? 
-                await database.findInvestmentsByMember(goal.memberId) :
-                await database.findInvestmentsByHousehold(user.householdId);
-
-            investments.forEach(investment => {
-                const currentValue = investment.totalValueGBP || (investment.totalValue * 0.79);
-                currentAmount += currentValue;
-            });
+        if (goal.memberId && goal.investmentType) {
+            const investments = await database.findInvestmentsByMember(goal.memberId, { investmentType: goal.investmentType });
+            for (const inv of investments) {
+                const rawValue = inv.totalValue ?? ((inv.quantity || 0) * (inv.currentPrice || 0));
+                const numericValue = Number.isFinite(rawValue) ? rawValue : 0;
+                const fromCurrency = inv.currency || 'GBP';
+                const toCurrency = goal.currency || 'GBP';
+                const converted = await currencyService.convertCurrency(numericValue, fromCurrency, toCurrency);
+                currentAmount += converted;
+            }
         }
 
         const isAchieved = currentAmount >= goal.targetAmount;
 
         const updatedGoal = await database.updateGoal(id, {
             currentAmount,
-            status: isAchieved ? 'achieved' : 'active'
+            status: isAchieved ? 'completed' : 'active'
         });
 
         res.json({

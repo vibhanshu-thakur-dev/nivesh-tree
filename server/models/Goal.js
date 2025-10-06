@@ -38,15 +38,16 @@ const goalSchema = new mongoose.Schema({
         uppercase: true,
         enum: ['USD', 'EUR', 'GBP', 'INR', 'GBX']
     },
+    investmentType: {
+        type: String,
+        enum: ['stock', 'mutual_fund', 'isa', 'etf', 'bond', 'crypto', 'cash', 'fixed_deposits', 'other'],
+        default: 'investment'
+    },
     targetDate: {
         type: Date,
         required: true
     },
-    category: {
-        type: String,
-        enum: ['retirement', 'house', 'education', 'travel', 'emergency', 'investment', 'other'],
-        default: 'investment'
-    },
+    // category removed per requirement to eliminate goal type
     priority: {
         type: String,
         enum: ['low', 'medium', 'high', 'critical'],

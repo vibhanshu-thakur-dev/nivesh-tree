@@ -25,8 +25,7 @@ router.get('/:memberId', authenticateToken, async (req, res) => {
         const apiKeys = await database.getMemberApiKeys(memberId);
         
         res.json({
-            trading212: { configured: !!apiKeys?.trading212 },
-            tickertape: { configured: !!apiKeys?.tickertape }
+            trading212: { configured: !!apiKeys?.trading212 }
         });
     } catch (error) {
         console.error('Get member API keys error:', error);
@@ -36,8 +35,7 @@ router.get('/:memberId', authenticateToken, async (req, res) => {
 
 // Update member API keys
 router.put('/:memberId', authenticateToken, [
-    body('trading212').optional().isString(),
-    body('tickertape').optional().isString()
+    body('trading212').optional().isString()
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
@@ -57,22 +55,19 @@ router.put('/:memberId', authenticateToken, [
             return res.status(404).json({ error: 'Member not found' });
         }
 
-        const { trading212, tickertape } = req.body;
+        const { trading212 } = req.body;
         const updatedApiKeys = {};
 
         if (trading212 !== undefined) {
             updatedApiKeys.trading212 = trading212 ? encryptionService.encryptApiKey(trading212) : null;
         }
-        if (tickertape !== undefined) {
-            updatedApiKeys.tickertape = tickertape ? encryptionService.encryptApiKey(tickertape) : null;
-        }
+        // Tickertape does not require API key; ignore if present
 
         const updatedMember = await database.updateMemberApiKeys(memberId, updatedApiKeys);
         
         res.json({ 
             message: 'API keys updated successfully',
-            trading212: { configured: !!updatedMember.apiKeys.trading212 },
-            tickertape: { configured: !!updatedMember.apiKeys.tickertape }
+            trading212: { configured: !!updatedMember.apiKeys.trading212 }
         });
     } catch (error) {
         console.error('Update member API keys error:', error);
@@ -95,7 +90,7 @@ router.delete('/:memberId/:platform', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Member not found' });
         }
 
-        if (!['trading212', 'tickertape'].includes(platform)) {
+        if (!['trading212'].includes(platform)) {
             return res.status(400).json({ error: 'Invalid platform' });
         }
 

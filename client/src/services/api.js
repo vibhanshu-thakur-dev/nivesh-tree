@@ -78,7 +78,7 @@ export const investmentsAPI = {
 
 // Goals API
 export const goalsAPI = {
-  getGoals: () => api.get('/goals'),
+  getGoals: (params = {}) => api.get('/goals', { params }),
   createGoal: (goal) => api.post('/goals', goal),
   updateGoal: (id, goal) => api.put(`/goals/${id}`, goal),
   deleteGoal: (id) => api.delete(`/goals/${id}`),

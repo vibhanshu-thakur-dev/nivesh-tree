@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { householdsAPI } from '../services/api';
 import CurrencySelector from './CurrencySelector';
 import {
   Home,
@@ -17,6 +18,18 @@ import {
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
+  const [householdName, setHouseholdName] = useState('');
+  useEffect(() => {
+    const loadHousehold = async () => {
+      try {
+        const res = await householdsAPI.getHousehold();
+        setHouseholdName(res.data.household?.name || 'Household');
+      } catch (e) {
+        setHouseholdName('Household');
+      }
+    };
+    loadHousehold();
+  }, []);
   const location = useLocation();
 
   const navigation = [
@@ -97,8 +110,11 @@ const Layout = () => {
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
-          <div className="flex h-16 items-center px-4">
+          <div className="flex h-16 items-center px-4 justify-between">
             <h1 className="text-xl font-bold text-gradient">Nivesh Tree</h1>
+            <button onClick={() => setSidebarOpen(s => !s)} className="text-gray-500 hover:text-gray-700">
+              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
             {navigation.map((item) => {
@@ -121,16 +137,10 @@ const Layout = () => {
           </nav>
           <div className="border-t border-gray-200 p-4">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
-                  <User className="h-5 w-5 text-primary-600" />
-                </div>
-              </div>
-              <div className="ml-3 flex-1 min-w-0">
+              <div className="ml-0 flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  {user?.firstName} {user?.lastName}
+                  {householdName}
                 </p>
-                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
               </div>
             </div>
             <button
@@ -158,13 +168,7 @@ const Layout = () => {
               <CurrencySelector />
               <div className="flex items-center space-x-3">
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">
-                    {user?.firstName} {user?.lastName}
-                  </p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
-                </div>
-                <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
-                  <User className="h-5 w-5 text-primary-600" />
+                  <p className="text-sm font-medium text-gray-900">{householdName}</p>
                 </div>
               </div>
             </div>

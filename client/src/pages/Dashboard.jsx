@@ -24,6 +24,7 @@ const Dashboard = () => {
   const [selectedMemberId, setSelectedMemberId] = useState(null);
   const [household, setHousehold] = useState(null);
   const [allPortfolioData, setAllPortfolioData] = useState(null);
+  const [memberGoals, setMemberGoals] = useState([]);
   
   const { formatCurrency } = useCurrency();
   const { convertInvestments, calculateInvestmentMetrics, convertPortfolioData } = useCurrencyConversion();
@@ -35,6 +36,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     filterDataByMember();
+    fetchGoalsForMember();
   }, [selectedMemberId, allPortfolioData]);
 
   const fetchHouseholdData = async () => {
@@ -78,6 +80,17 @@ const Dashboard = () => {
       toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchGoalsForMember = async () => {
+    try {
+      const params = {};
+      if (selectedMemberId) params.memberId = selectedMemberId;
+      const res = await goalsAPI.getGoals(params);
+      setMemberGoals(res.data.goals || []);
+    } catch (e) {
+      setMemberGoals([]);
     }
   };
 
@@ -148,6 +161,25 @@ const Dashboard = () => {
     const symbol = currencySymbols[currency] || currency;
     return `${symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
+
+  const getGoalProgressPct = (goal) => {
+    if (goal?.progress?.percentage !== undefined) return Math.min(100, Math.max(0, goal.progress.percentage));
+    const target = goal?.targetAmount || 0;
+    const current = goal?.currentAmount || 0;
+    if (!target) return 0;
+    return Math.min(100, (current / target) * 100);
+  };
+
+  const goalsByType = memberGoals.reduce((acc, g) => {
+    const key = g.investmentType || 'other';
+    if (!acc[key]) acc[key] = { goals: [], avgProgress: 0 };
+    acc[key].goals.push(g);
+    return acc;
+  }, {});
+  Object.keys(goalsByType).forEach((k) => {
+    const list = goalsByType[k].goals;
+    goalsByType[k].avgProgress = list.length ? (list.reduce((s, g) => s + getGoalProgressPct(g), 0) / list.length) : 0;
+  });
 
   return (
     <div className="space-y-6">
@@ -721,6 +753,66 @@ const Dashboard = () => {
           goals={goalsData}
         />
       )}
+
+      {/* Goals Progress by Member and Investment Type */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Goals Progress {selectedMemberId ? '(Selected Member)' : '(Household)'}</h3>
+          </div>
+          {Object.keys(goalsByType).length === 0 ? (
+            <p className="text-sm text-gray-600">No goals found.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Object.entries(goalsByType).map(([type, data]) => (
+                <div key={type} className="bg-gray-50 rounded-lg p-4 border">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700 capitalize">{type.replace('_', ' ')}</span>
+                    <span className="text-xs text-gray-500">{data.goals.length} goals</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="h-2 rounded-full bg-primary-600" style={{ width: `${data.avgProgress.toFixed(0)}%` }} />
+                  </div>
+                  <div className="mt-1 text-xs text-gray-600">Avg progress: {data.avgProgress.toFixed(1)}%</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Goals List</h3>
+          </div>
+          {memberGoals.length === 0 ? (
+            <p className="text-sm text-gray-600">No goals to display.</p>
+          ) : (
+            <div className="space-y-4 max-h-96 overflow-auto pr-2">
+              {memberGoals.map((g) => {
+                const pct = getGoalProgressPct(g);
+                const achieved = g.status === 'achieved' || g.status === 'completed';
+                return (
+                  <div key={g._id} className="border rounded-lg p-3 bg-white">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-medium text-gray-900 truncate">{g.title}</div>
+                      <div className="text-xs text-gray-600">
+                        {formatCurrencyWithSymbol(g.currentAmount || 0, g.currency)} / {formatCurrencyWithSymbol(g.targetAmount || 0, g.currency)}
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className={`h-2 rounded-full ${achieved ? 'bg-success-600' : 'bg-primary-600'}`} style={{ width: `${pct}%` }} />
+                    </div>
+                    <div className="mt-1 text-xs text-gray-600 flex justify-between">
+                      <span>{pct.toFixed(1)}% {achieved ? '(Achieved)' : ''}</span>
+                      {g.targetDate && <span>Target: {new Date(g.targetDate).toLocaleDateString()}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Goals Overview */}
       {goalsData && (

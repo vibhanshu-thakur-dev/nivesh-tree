@@ -16,6 +16,7 @@ const CurrencySelector = ({ className = '' }) => {
 
     const handleCurrencyChange = async (currencyCode) => {
         await changeCurrency(currencyCode);
+        window.location.reload();
         setIsOpen(false);
     };
 

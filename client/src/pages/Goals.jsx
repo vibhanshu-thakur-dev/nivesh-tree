@@ -13,27 +13,49 @@ import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AddGoalModal from '../components/AddGoalModal';
 import EditGoalModal from '../components/EditGoalModal';
+import { householdsAPI } from '../services/api';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const Goals = () => {
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [members, setMembers] = useState([]);
+  const [selectedMemberId, setSelectedMemberId] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const { formatCurrency } = useCurrency();
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
 
   useEffect(() => {
-    fetchGoals();
+    fetchMembers();
   }, []);
+
+  useEffect(() => {
+    fetchGoals();
+  }, [selectedMemberId, statusFilter]);
 
   const fetchGoals = async () => {
     try {
       setLoading(true);
-      const response = await goalsAPI.getGoals();
-      setGoals(response.data.goals);
+      const params = {};
+      if (selectedMemberId) params.memberId = selectedMemberId;
+      if (statusFilter) params.status = statusFilter;
+      const response = await goalsAPI.getGoals(params);
+      setGoals(response.data.goals || []);
     } catch (error) {
       console.error('Error fetching goals:', error);
       toast.error('Failed to load goals');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMembers = async () => {
+    try {
+      const res = await householdsAPI.getMembers();
+      setMembers(res.data.members || []);
+    } catch (e) {
+      setMembers([]);
     }
   };
 
@@ -85,12 +107,7 @@ const Goals = () => {
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount || 0);
-  };
+  const formatAmount = (amount, currency) => formatCurrency(amount || 0, currency);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'No target date';
@@ -113,18 +130,41 @@ const Goals = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Investment Goals</h1>
           <p className="text-gray-600">Set and track your investment objectives</p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="btn btn-primary"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Goal
-        </button>
+        <div className="flex items-center gap-3">
+          <select
+            className="input"
+            value={selectedMemberId}
+            onChange={(e) => setSelectedMemberId(e.target.value)}
+          >
+            <option value="">All Members</option>
+            {members.map(m => (
+              <option key={m._id} value={m._id}>{m.name}</option>
+            ))}
+          </select>
+          <select
+            className="input"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+            <option value="paused">Paused</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="btn btn-primary"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Goal
+          </button>
+        </div>
       </div>
 
       {/* Goals Grid */}
@@ -144,12 +184,12 @@ const Goals = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {goals.map((goal) => {
-            const progressPercentage = getProgressPercentage(goal.current_amount, goal.target_amount);
-            const isAchieved = goal.is_achieved;
-            const isOverdue = goal.target_date && new Date(goal.target_date) < new Date() && !isAchieved;
+            const progressPercentage = getProgressPercentage(goal.currentAmount, goal.targetAmount);
+            const isAchieved = goal.status === 'achieved' || goal.status === 'completed';
+            const isOverdue = goal.targetDate && new Date(goal.targetDate) < new Date() && !isAchieved;
 
             return (
-              <div key={goal.id} className="card">
+              <div key={goal._id} className="card">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center">
                     {isAchieved ? (
@@ -158,7 +198,7 @@ const Goals = () => {
                       <Target className="h-5 w-5 text-primary-600 mr-2" />
                     )}
                     <h3 className="text-lg font-semibold text-gray-900">
-                      {goal.goal_name}
+                      {goal.title}
                     </h3>
                   </div>
                   <div className="flex items-center space-x-1">
@@ -169,7 +209,7 @@ const Goals = () => {
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteGoal(goal.id)}
+                      onClick={() => handleDeleteGoal(goal._id)}
                       className="text-gray-400 hover:text-danger-600"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -181,7 +221,7 @@ const Goals = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Progress</span>
                     <span className="text-sm font-medium">
-                      {formatCurrency(goal.current_amount)} / {formatCurrency(goal.target_amount)}
+                      {formatAmount(goal.currentAmount, goal.currency)} / {formatAmount(goal.targetAmount, goal.currency)}
                     </span>
                   </div>
 
@@ -205,11 +245,11 @@ const Goals = () => {
                     )}
                   </div>
 
-                  {goal.target_date && (
+                  {goal.targetDate && (
                     <div className="flex items-center text-sm text-gray-600">
                       <Clock className="h-4 w-4 mr-1" />
                       <span className={isOverdue ? 'text-danger-600' : ''}>
-                        Target: {formatDate(goal.target_date)}
+                        Target: {formatDate(goal.targetDate)}
                       </span>
                     </div>
                   )}
@@ -222,7 +262,7 @@ const Goals = () => {
 
                   <div className="pt-2">
                     <button
-                      onClick={() => handleUpdateProgress(goal.id)}
+                      onClick={() => handleUpdateProgress(goal._id)}
                       className="btn btn-outline w-full text-sm"
                     >
                       <TrendingUp className="h-4 w-4 mr-2" />

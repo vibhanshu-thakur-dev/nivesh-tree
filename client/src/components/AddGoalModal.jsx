@@ -1,15 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { householdsAPI } from '../services/api';
 
 const AddGoalModal = ({ onClose, onAdd }) => {
   const [formData, setFormData] = useState({
-    goalName: '',
+    title: '',
     targetAmount: '',
     targetDate: '',
-    goalType: 'total_value',
-    targetSymbol: ''
+    targetSymbol: '',
+    memberId: '',
+    currency: 'GBP',
+    investmentType: 'isa'
   });
   const [loading, setLoading] = useState(false);
+  const [members, setMembers] = useState([]);
+
+  useEffect(() => {
+    const loadMembers = async () => {
+      try {
+        const res = await householdsAPI.getMembers();
+        setMembers(res.data.members || []);
+      } catch (e) {
+        setMembers([]);
+      }
+    };
+    loadMembers();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -24,10 +40,13 @@ const AddGoalModal = ({ onClose, onAdd }) => {
 
     try {
       const goalData = {
-        ...formData,
+        title: formData.title,
+        memberId: formData.memberId,
         targetAmount: parseFloat(formData.targetAmount),
         targetDate: formData.targetDate || null,
-        targetSymbol: formData.goalType === 'specific_investment' ? formData.targetSymbol : null
+        currency: formData.currency,
+        investmentType: formData.investmentType,
+        targetSymbol: formData.targetSymbol || null
       };
       await onAdd(goalData);
     } catch (error) {
@@ -54,39 +73,39 @@ const AddGoalModal = ({ onClose, onAdd }) => {
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div>
-              <label htmlFor="goalName" className="label">
-                Goal Name *
+              <label htmlFor="title" className="label">
+                Goal Title *
               </label>
               <input
-                id="goalName"
-                name="goalName"
+                id="title"
+                name="title"
                 type="text"
                 required
                 className="input"
-                placeholder="e.g., Retirement Fund, House Down Payment"
-                value={formData.goalName}
+                placeholder="e.g., ISA for John, House Down Payment"
+                value={formData.title}
                 onChange={handleChange}
               />
             </div>
 
             <div>
-              <label htmlFor="goalType" className="label">
-                Goal Type *
-              </label>
+              <label htmlFor="memberId" className="label">Member *</label>
               <select
-                id="goalType"
-                name="goalType"
+                id="memberId"
+                name="memberId"
                 required
                 className="input"
-                value={formData.goalType}
+                value={formData.memberId}
                 onChange={handleChange}
               >
-                <option value="total_value">Total Portfolio Value</option>
-                <option value="specific_investment">Specific Investment Value</option>
+                <option value="">Select member</option>
+                {members.map(m => (
+                  <option key={m._id} value={m._id}>{m.name}</option>
+                ))}
               </select>
             </div>
 
-            {formData.goalType === 'specific_investment' && (
+            {false && (
               <div>
                 <label htmlFor="targetSymbol" className="label">
                   Target Investment Symbol *
@@ -95,7 +114,7 @@ const AddGoalModal = ({ onClose, onAdd }) => {
                   id="targetSymbol"
                   name="targetSymbol"
                   type="text"
-                  required={formData.goalType === 'specific_investment'}
+                  required={false}
                   className="input"
                   placeholder="e.g., AAPL, TSLA"
                   value={formData.targetSymbol}
@@ -103,6 +122,42 @@ const AddGoalModal = ({ onClose, onAdd }) => {
                 />
               </div>
             )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="currency" className="label">Currency *</label>
+                <select
+                  id="currency"
+                  name="currency"
+                  required
+                  className="input"
+                  value={formData.currency}
+                  onChange={handleChange}
+                >
+                  <option value="GBP">GBP</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="INR">INR</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="investmentType" className="label">Investment Type *</label>
+                <select
+                  id="investmentType"
+                  name="investmentType"
+                  required
+                  className="input"
+                  value={formData.investmentType}
+                  onChange={handleChange}
+                >
+                  <option value="isa">ISA</option>
+                  <option value="mutual_fund">Mutual Fund</option>
+                  <option value="stock">Stock</option>
+                  <option value="cash">Cash</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
 
             <div>
               <label htmlFor="targetAmount" className="label">

@@ -22,6 +22,7 @@ const HouseholdManagement = () => {
   const [editingMember, setEditingMember] = useState(null);
   const [showApiKeysModal, setShowApiKeysModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
+  const [showEditHouseholdModal, setShowEditHouseholdModal] = useState(false);
 
   useEffect(() => {
     fetchHouseholdData();
@@ -42,6 +43,18 @@ const HouseholdManagement = () => {
       toast.error('Failed to load household data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateHousehold = async (data) => {
+    try {
+      await householdsAPI.updateHousehold(data);
+      toast.success('Household updated successfully');
+      setShowEditHouseholdModal(false);
+      fetchHouseholdData();
+    } catch (error) {
+      console.error('Error updating household:', error);
+      toast.error('Failed to update household');
     }
   };
 
@@ -113,13 +126,22 @@ const HouseholdManagement = () => {
               <p className="text-gray-600">{household?.description}</p>
             </div>
           </div>
-          <button
-            onClick={() => setShowAddMemberModal(true)}
-            className="btn btn-primary flex items-center space-x-2"
-          >
-            <UserPlus className="h-4 w-4" />
-            <span>Add Member</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowEditHouseholdModal(true)}
+              className="btn btn-outline flex items-center space-x-2"
+            >
+              <Settings className="h-4 w-4" />
+              <span>Edit Household</span>
+            </button>
+            <button
+              onClick={() => setShowAddMemberModal(true)}
+              className="btn btn-primary flex items-center space-x-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span>Add Member</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -232,6 +254,15 @@ const HouseholdManagement = () => {
             setShowApiKeysModal(false);
             setSelectedMember(null);
           }}
+        />
+      )}
+
+      {/* Edit Household Modal */}
+      {showEditHouseholdModal && household && (
+        <EditHouseholdModal
+          household={household}
+          onClose={() => setShowEditHouseholdModal(false)}
+          onUpdate={handleUpdateHousehold}
         />
       )}
     </div>
@@ -416,7 +447,7 @@ const EditMemberModal = ({ member, onClose, onUpdate }) => {
 
 // Member API Keys Modal Component
 const MemberApiKeysModal = ({ member, onClose }) => {
-  const [apiKeys, setApiKeys] = useState({ trading212: '', tickertape: '' });
+  const [apiKeys, setApiKeys] = useState({ trading212: '' });
   const [loading, setLoading] = useState(false);
   const [testing, setTesting] = useState(false);
 
@@ -427,7 +458,8 @@ const MemberApiKeysModal = ({ member, onClose }) => {
   const fetchApiKeys = async () => {
     try {
       const response = await memberApiKeysAPI.getMemberApiKeys(member._id);
-      setApiKeys(response.data);
+      // API returns configured flags, not the actual key; keep input empty
+      setApiKeys({ trading212: '' });
     } catch (error) {
       console.error('Error fetching API keys:', error);
     }
@@ -436,7 +468,7 @@ const MemberApiKeysModal = ({ member, onClose }) => {
   const handleSaveApiKeys = async () => {
     setLoading(true);
     try {
-      await memberApiKeysAPI.updateMemberApiKeys(member._id, apiKeys);
+      await memberApiKeysAPI.updateMemberApiKeys(member._id, { trading212: apiKeys.trading212 });
       toast.success('API keys updated successfully');
       onClose();
     } catch (error) {
@@ -493,19 +525,6 @@ const MemberApiKeysModal = ({ member, onClose }) => {
               </button>
             </div>
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tickertape API Key
-            </label>
-            <input
-              type="password"
-              className="input w-full"
-              value={apiKeys.tickertape}
-              onChange={(e) => setApiKeys({ ...apiKeys, tickertape: e.target.value })}
-              placeholder="Enter Tickertape API key"
-            />
-          </div>
         </div>
         
         <div className="flex justify-end space-x-3 mt-6">
@@ -532,3 +551,59 @@ const MemberApiKeysModal = ({ member, onClose }) => {
 };
 
 export default HouseholdManagement;
+
+// Edit Household Modal Component
+const EditHouseholdModal = ({ household, onClose, onUpdate }) => {
+  const [formData, setFormData] = useState({
+    name: household.name || '',
+    description: household.description || ''
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await onUpdate(formData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4">Edit Household</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Household Name</label>
+            <input
+              type="text"
+              className="input w-full"
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea
+              className="input w-full"
+              rows={3}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            />
+          </div>
+          <div className="flex justify-end space-x-3">
+            <button type="button" onClick={onClose} className="btn btn-outline" disabled={loading}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? <LoadingSpinner size="sm" /> : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};

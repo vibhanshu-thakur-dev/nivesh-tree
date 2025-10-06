@@ -13,10 +13,10 @@ const EditGoalModal = ({ goal, onClose, onUpdate }) => {
   useEffect(() => {
     if (goal) {
       setFormData({
-        goalName: goal.goal_name,
-        targetAmount: goal.target_amount.toString(),
-        targetDate: goal.target_date ? goal.target_date.split('T')[0] : '',
-        currentAmount: goal.current_amount.toString()
+        goalName: goal.title,
+        targetAmount: (goal.targetAmount ?? 0).toString(),
+        targetDate: goal.targetDate ? goal.targetDate.split('T')[0] : '',
+        currentAmount: (goal.currentAmount ?? 0).toString()
       });
     }
   }, [goal]);
@@ -39,7 +39,7 @@ const EditGoalModal = ({ goal, onClose, onUpdate }) => {
         targetDate: formData.targetDate || null,
         currentAmount: parseFloat(formData.currentAmount)
       };
-      await onUpdate(goal.id, updateData);
+      await onUpdate(goal._id, updateData);
     } catch (error) {
       console.error('Update goal error:', error);
     } finally {
